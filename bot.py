@@ -10,6 +10,11 @@ intents.message_content = True
 bot = commands.InteractionBot(intents=intents, test_guilds=test_guilds)
 
 
+@bot.slash_command(name="hello", description="Responds with 'World'")
+async def hello(inter):
+    await inter.response.send_message("World")
+
+
 # Setup presence and print some info
 @bot.event
 async def on_ready():
