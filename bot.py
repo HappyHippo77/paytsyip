@@ -21,14 +21,6 @@ async def on_ready():
     print('status set.')
     print('-------------------')
 
-    # channel = bot.get_channel(1136446702925135872)
-    # msg = channel.get_partial_message(1193741565399666749)
-    # await msg.edit(embed=disnake.Embed(
-    #     title="Roles",
-    #     description="Click the reactions below to select the corresponding roles.\n\n:tickets: - Notifications for Movie Night\n:video_game: - Notifications for Game Night\n<:paytsyipsmol:1127046949871292608> - Notifications for Every Paytsyìp Post\n:tv: - Notifications for Spontaneous TV Shows in VC\n:wrench: - Notifications for Na'vi Resource Developers",
-    #     colour=0x4ab5b5
-    # ))
-
 
 # Load cogs
 
