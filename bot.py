@@ -1,8 +1,10 @@
+import config
+import cogs.wordgame.wordgame
 import disnake
 from disnake.ext import commands
-import config
+import json
 
-test_guilds = [1097277537404583956]
+test_guilds = [1198280678530351124]
 
 intents = disnake.Intents.default()
 intents.members = True
@@ -21,8 +23,8 @@ async def on_ready():
     print('status set.')
     print('-------------------')
 
-
-# Load cogs
+# Add cogs
+bot.add_cog(cogs.wordgame.wordgame.WordgameCog(bot))
 
 # Run bot
 bot.run(config.token)

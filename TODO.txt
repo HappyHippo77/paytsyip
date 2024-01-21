@@ -1,0 +1,1 @@
+Add handling for edge cases where no unused words remain, this should cause a draw, not a win.
