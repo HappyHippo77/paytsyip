@@ -13,6 +13,9 @@ intents.members = True
 intents.message_content = True
 bot = commands.InteractionBot(intents=intents, test_guilds=test_guilds)
 
+if not os.path.exists("logs"):
+    os.mkdir("logs")
+
 logger = logging.getLogger('paytsyìp')
 logger.setLevel(logging.DEBUG)
 file_formatter = logging.Formatter('[%(asctime)s]  [%(levelname)s]  [%(name)s]    %(message)s', "%Y-%m-%d %H:%M:%S")
@@ -23,6 +26,8 @@ console = logging.StreamHandler()
 console_formatter = logging.Formatter('\033[33m[%(asctime)s]  [%(levelname)s]  [%(name)s]    %(message)s', "%Y-%m-%d %H:%M:%S")
 console.setFormatter(console_formatter)
 logger.addHandler(console)
+
+
 # Setup presence and print some info
 @bot.event
 async def on_ready():

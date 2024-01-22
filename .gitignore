@@ -1,4 +1,5 @@
 .idea/
 word_list_outputs/
+logs/
 token.txt
 *.db
