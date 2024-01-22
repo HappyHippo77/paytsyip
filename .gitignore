@@ -1,3 +1,4 @@
 .idea/
+word_list_outputs/
 token.txt
 *.db
