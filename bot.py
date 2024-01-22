@@ -6,12 +6,10 @@ import cogs.wordgame.wordgame
 import disnake
 from disnake.ext import commands
 
-test_guilds = [1198280678530351124]
-
 intents = disnake.Intents.default()
 intents.members = True
 intents.message_content = True
-bot = commands.InteractionBot(intents=intents, test_guilds=test_guilds)
+bot = commands.InteractionBot(intents=intents, test_guilds=config.test_guilds)
 
 if not os.path.exists("logs"):
     os.mkdir("logs")

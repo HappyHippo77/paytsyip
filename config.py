@@ -4,6 +4,11 @@ import json
 with open('token.txt', 'r') as file:
     token = file.read()
 
+test_guilds = []
+with open('test_guilds.txt', 'r') as f:
+    for guild in f:
+        test_guilds.append(int(guild.strip()))
+
 # System Basics
 token = token.strip()
 description = "I think I'm a useful bot."
