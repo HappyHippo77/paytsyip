@@ -1,2 +1,6 @@
 .idea/
+word_list_outputs/
+logs/
 token.txt
+test_guilds.txt
+*.db
