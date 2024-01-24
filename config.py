@@ -1,5 +1,3 @@
-import json
-
 # Open token file (so the repository doesn't receive the token and the config can still be pushed)
 with open('token.txt', 'r') as file:
     token = file.read()

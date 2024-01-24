@@ -1,19 +1,12 @@
 import logging
 import os
-
 import config
 import cogs.wordgame.wordgame
 import disnake
 from disnake.ext import commands
 
-intents = disnake.Intents.default()
-intents.members = True
-intents.message_content = True
-bot = commands.InteractionBot(intents=intents, test_guilds=config.test_guilds)
-
 if not os.path.exists("logs"):
     os.mkdir("logs")
-
 logger = logging.getLogger('paytsyìp')
 logger.setLevel(logging.DEBUG)
 file_formatter = logging.Formatter('[%(asctime)s]  [%(levelname)s]  [%(name)s]    %(message)s', "%Y-%m-%d %H:%M:%S")
@@ -21,9 +14,14 @@ log_file = logging.FileHandler("logs/latest.log", "w", "utf-8")
 log_file.setFormatter(file_formatter)
 logger.addHandler(log_file)
 console = logging.StreamHandler()
-console_formatter = logging.Formatter('\033[33m[%(asctime)s]  [%(levelname)s]  [%(name)s]    %(message)s', "%Y-%m-%d %H:%M:%S")
+console_formatter = logging.Formatter('\033[33m[%(asctime)s]  [%(levelname)s]  [%(name)s]    %(message)s\033[0m', "%Y-%m-%d %H:%M:%S")
 console.setFormatter(console_formatter)
 logger.addHandler(console)
+
+intents = disnake.Intents.default()
+intents.members = True
+intents.message_content = True
+bot = commands.InteractionBot(intents=intents, test_guilds=config.test_guilds)
 
 
 # Setup presence and print some info

@@ -1,5 +1,4 @@
 import logging
-import pprint
 import random
 from enum import Enum
 import disnake
@@ -102,6 +101,7 @@ class InvalidReason(Enum):
 
 valid_word_list = []
 invalid_words = {}
+full_unused_words = {}
 for entry in dictionary:
     entry = to_monographic(entry)
     if ' ' in entry:
@@ -113,6 +113,9 @@ for entry in dictionary:
     elif entry[-1] in ['ì', 'ä']:
         invalid_words[entry] = InvalidReason.diacritic
     else:
+        if not isinstance(full_unused_words.get(entry[0]), list):
+            full_unused_words[entry[0]] = []
+        full_unused_words[entry[0]].append(entry)
         valid_word_list.append(entry)
 
 # Write word lists to files to be examined. Run every time changes are made.
@@ -136,7 +139,30 @@ class GameMode(Enum):
 #         "word": The last used word.
 #         "used_words": The list of previously used words.
 #         "current_player": The index of the current player from the list.
+#         "unused_words": dict.
+#             K: the letter the words start with.
+#             V: the list of unused words starting with that letter.
 games = {}
+
+
+def add_word_fields(embed: disnake.Embed, word: str):
+    word_data = reykunyu.get_from_dictionary(from_monographic(word))
+    try:
+        embed.add_field(name=util.i18n("meaning"), value="; ".join(word_data.translate("en")))
+    except AttributeError:
+        logger.error("Cannot add meaning for " + word)
+    try:
+        embed.add_field(name=util.i18n("part_of_speech"), value=word_data.part_of_speech)
+    except AttributeError:
+        logger.error("Cannot add part of speech for " + word)
+    try:
+        embed.add_field(name=util.i18n("stress"),
+                        value=word_data.best_pronunciation.get(capitalized=False, prefix="**", suffix="**"))
+    except AttributeError:
+        logger.error("Cannot add stress for " + word)
+    except NoPronunciationError:
+        logger.error("Cannot add stress for " + word)
+    return embed
 
 
 async def start_game(channel: disnake.TextChannel, game_mode: GameMode, player_list: list[disnake.User]):
@@ -147,28 +173,15 @@ async def start_game(channel: disnake.TextChannel, game_mode: GameMode, player_l
     games[channel]["word"] = first_word
     games[channel]["used_words"] = [first_word]
     games[channel]["current_player"] = 0
+    games[channel]["unused_words"] = full_unused_words.copy()
+    games[channel]["unused_words"][first_word[0]].remove(first_word)
 
-    word_data = reykunyu.get_from_dictionary(from_monographic(first_word))
     embed = disnake.Embed(color=config.neutral_color,
                           title=util.i18n("wordgame.begin"),
                           description=util.i18n("wordgame.start_message") % ("Elimination", from_monographic(first_word)) +
                           "\n\n" + util.i18n("wordgame.turn") % player_list[0].id)
-    try:
-        embed.add_field(name=util.i18n("meaning"), value="; ".join(word_data.translate("en")))
-    except AttributeError:
-        logger.error("Cannot add meaning for " + first_word)
-    try:
-        embed.add_field(name=util.i18n("part_of_speech"), value=word_data.part_of_speech)
-    except AttributeError:
-        logger.error("Cannot add part of speech for " + first_word)
-    try:
-        embed.add_field(name=util.i18n("stress"),
-                        value=word_data.best_pronunciation.get(capitalized=False, prefix="**", suffix="**"))
-    except AttributeError:
-        logger.error("Cannot add stress for " + first_word)
-    except NoPronunciationError:
-        logger.error("Cannot add stress for " + first_word)
-    await channel.send(embed=embed)
+
+    await channel.send(embed=add_word_fields(embed, first_word))
 
 
 class EliminationSignup(disnake.ui.View):
@@ -269,7 +282,6 @@ async def accept_word(word: str, channel: disnake.TextChannel, author_id: int):
         current_player = 0
 
     current_player_id = player_list[current_player].id
-    word_data = reykunyu.get_from_dictionary(from_monographic(word))
 
     embed = disnake.Embed(color=config.neutral_color,
                           title=util.i18n("wordgame.wordgame"),
@@ -277,31 +289,24 @@ async def accept_word(word: str, channel: disnake.TextChannel, author_id: int):
                           util.i18n("wordgame.word_said") % (author_id, from_monographic(word)) + "\n\n" +
                           util.i18n("wordgame.turn") % current_player_id)
 
-    try:
-        embed.add_field(name=util.i18n("meaning"), value="; ".join(word_data.translate("en")))
-    except AttributeError:
-        logger.error("Cannot add meaning for " + word)
-    try:
-        embed.add_field(name=util.i18n("part_of_speech"), value=word_data.part_of_speech)
-    except AttributeError:
-        logger.error("Cannot add part of speech for " + word)
-    try:
-        embed.add_field(name=util.i18n("stress"),
-                        value=word_data.best_pronunciation.get(capitalized=False, prefix="**", suffix="**"))
-    except AttributeError:
-        logger.error("Cannot add stress for " + word)
-    except NoPronunciationError:
-        logger.error("Cannot add stress for " + word)
-
-    await channel.send(embed=embed)
+    await channel.send(embed=add_word_fields(embed, word))
 
 
-async def win(player: disnake.User, channel: disnake.TextChannel):
+async def win(player: disnake.User | None, channel: disnake.TextChannel):
     games.pop(channel)
     await channel.send(embed=disnake.Embed(
         color=config.neutral_color,
         title=util.i18n("wordgame.game_over"),
         description=util.i18n("wordgame.winner") % player.id
+    ))
+
+
+async def draw(channel: disnake.TextChannel):
+    games.pop(channel)
+    await channel.send(embed=disnake.Embed(
+        color=config.neutral_color,
+        title=util.i18n("wordgame.game_over"),
+        description=util.i18n("wordgame.draw")
     ))
 
 
@@ -363,10 +368,10 @@ class WordgameCog(commands.Cog):
                 content = message.content.lower()
                 word = to_monographic(content)
                 if word in invalid_words:
-                    logger.debug("The word is invalid")
+                    logger.debug("The word is an invalid word")
                     await channel.send(embed=invalid_word_embed(invalid_words.get(word)))
                 elif word in valid_word_list:
-                    logger.debug("The word is valid")
+                    logger.debug("The word is a valid word")
                     if message.author == game.get("players")[game.get("current_player")]:
                         logger.debug("It is the message author's turn")
                         if word.startswith(game.get("word")[-1]):
@@ -374,11 +379,14 @@ class WordgameCog(commands.Cog):
                             if game.get("game_mode") == GameMode.elimination:
                                 logger.debug("The game mode is Elimination")
                                 if word not in game.get("used_words"):
-                                    logger.debug("The word is unused")
+                                    logger.debug("The word is unused. Accept word.")
                                     await accept_word(word, channel, message.author.id)
                                     games[channel]["used_words"].append(word)
+                                    games[channel]["unused_words"][word[0]].remove(word)
+                                    if not games.get(channel).get("unused_words").get(word[-1]):
+                                        await draw(channel)
                                 else:
-                                    logger.debug("The word is used")
+                                    logger.debug("The word is used. Eliminate player.")
                                     games[channel]["players"].remove(message.author)
                                     current_player = games.get(channel).get("current_player")
                                     players = games.get(channel).get("players")
@@ -393,7 +401,11 @@ class WordgameCog(commands.Cog):
                                             current_player = 0
                                     else:
                                         await win(game.get("players")[0], channel)
+                        else:
+                            logger.debug("The word does not end with the correct sound")
+                            await channel.send(embed=util.errorEmbed(util.i18n("wordgame.word_incorrect")))
                     elif message.author not in game.get("players"):
+                        logger.debug("Message author did not join the game")
                         await channel.send(embed=util.errorEmbed(util.i18n("wordgame.not_joined")))
                     else:
                         logger.debug("It is not the message author's turn")
