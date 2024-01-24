@@ -65,24 +65,38 @@ dictionary = reykunyu.dictionary
 
 
 # Returns None if the input is not a Na'vi word.
-def to_monographic(navi: str) -> str | None:
-    syllables = []
-    try:
-        syllables = dictionary.get(navi).best_pronunciation.raw[0]
-    except NoPronunciationError:
-        syllables.append(navi)
-    except AttributeError:
-        return None
+def to_monographic(navi: str) -> str:
+    pre_monographic = (navi.replace('ng', 'ŋ').replace('ay', 'à').replace('ey', 'è')
+                       .replace('aw', 'á').replace('ew', 'é').replace('ll', 'ʟ')
+                       .replace('rr', 'ʀ').replace('ts', 'c').replace('px', 'b')
+                       .replace('tx', 'd').replace('kx', 'g'))
+    nuclei = ['a', 'ä', 'e', 'i', 'ì', 'o', 'u', 'á', 'é', 'à', 'è', 'ʟ', 'ʀ']
+    monographic = ""
+    for num, letter in enumerate(pre_monographic):
+        if letter == 'à':
+            if num + 1 < len(pre_monographic) and pre_monographic[num + 1] in nuclei:
+                monographic += "ay"
+            else:
+                monographic += 'à'
+        elif letter == 'è':
+            if num + 1 < len(pre_monographic) and pre_monographic[num + 1] in nuclei:
+                monographic += "ey"
+            else:
+                monographic += 'è'
+        elif letter == 'á':
+            if num + 1 < len(pre_monographic) and pre_monographic[num + 1] in nuclei:
+                monographic += "aw"
+            else:
+                monographic += 'á'
+        elif letter == 'é':
+            if num + 1 < len(pre_monographic) and pre_monographic[num + 1] in nuclei:
+                monographic += "ew"
+            else:
+                monographic += 'é'
+        else:
+            monographic += letter
 
-    string = ""
-
-    for syllable in syllables:
-        string += (syllable.replace('ng', 'ŋ').replace('ay', 'à').replace('ey', 'è')
-                   .replace('aw', 'á').replace('ew', 'é').replace('ll', 'ʟ')
-                   .replace('rr', 'ʀ').replace('ts', 'c').replace('px', 'b')
-                   .replace('tx', 'd').replace('kx', 'g')).replace('ù', 'u').lower()
-
-    return string
+    return monographic
 
 
 def from_monographic(monographic: str) -> str:
@@ -119,12 +133,12 @@ for entry in dictionary:
         valid_word_list.append(entry)
 
 # Write word lists to files to be examined. Run every time changes are made.
-# with open("cogs/wordgame/word_list_outputs/dictionary.txt", "w", encoding="utf-8") as f:
-#     f.write("\n".join(dictionary.keys()))
-# with open("cogs/wordgame/word_list_outputs/valid_words.txt", "w", encoding="utf-8") as f:
-#     f.write("\n".join(valid_word_list))
-# with open("cogs/wordgame/word_list_outputs/invalid_words.txt", "w", encoding="utf-8") as f:
-#     f.write("\n".join(invalid_words.keys()))
+with open("cogs/wordgame/word_list_outputs/dictionary.txt", "w", encoding="utf-8") as f:
+    f.write("\n".join(dictionary.keys()))
+with open("cogs/wordgame/word_list_outputs/valid_words.txt", "w", encoding="utf-8") as f:
+    f.write("\n".join(valid_word_list))
+with open("cogs/wordgame/word_list_outputs/invalid_words.txt", "w", encoding="utf-8") as f:
+    f.write("\n".join(invalid_words.keys()))
 
 
 class GameMode(Enum):
@@ -292,6 +306,20 @@ async def accept_word(word: str, channel: disnake.TextChannel, author_id: int):
     await channel.send(embed=add_word_fields(embed, word))
 
 
+async def remove_player(channel: disnake.TextChannel, player: disnake.User) -> bool:
+    """Returns a bool representing whether the game should be won by the remaining player."""
+    games[channel]["players"].remove(player)
+    current_player = games.get(channel).get("current_player")
+    players = games.get(channel).get("players")
+    if current_player >= len(players):
+        games[channel]["current_player"] = 0
+        current_player = 0
+    return_player = games.get(channel).get("players")[games.get(channel).get("current_player")]
+    if not len(players) > 1:
+        return True
+    return False
+
+
 async def win(player: disnake.User | None, channel: disnake.TextChannel):
     games.pop(channel)
     await channel.send(embed=disnake.Embed(
@@ -358,6 +386,27 @@ class WordgameCog(commands.Cog):
             await inter.response.send_message(embed=util.errorEmbed(util.i18n("wordgame.no_game_running")),
                                               ephemeral=True)
 
+    @wordgame.sub_command(name="forfeit", description="Forfeit a game that you joined.")
+    async def forfeit(self, inter: disnake.ApplicationCommandInteraction):
+        if (inter.channel in games
+                and games.get(inter.channel)
+                and inter.author in games.get(inter.channel).get("players")
+                and games.get(inter.channel).get("game_mode") == GameMode.elimination):
+            embed = disnake.Embed(color=config.neutral_color,
+                                  title=util.i18n("wordgame.wordgame"),
+                                  description=util.i18n("wordgame.left") % inter.author.id)
+            alert_next_player = False
+            current_player = games.get(inter.channel).get("players")[games.get(inter.channel).get("current_player")]
+            if current_player == inter.author:
+                alert_next_player = True
+            is_win = await remove_player(inter.channel, inter.author)
+            if len(games.get(inter.channel).get("players")) > 1 and alert_next_player:
+                current_player = games.get(inter.channel).get("players")[games.get(inter.channel).get("current_player")]
+                embed.description += "\n\n" + util.i18n("wordgame.turn") % current_player.id
+            await inter.response.send_message(embed=embed)
+            if is_win:
+                await win(games.get(inter.channel).get("players")[0], inter.channel)
+
     @commands.Cog.listener()
     async def on_message(self, message: disnake.Message):
         if not message.author.bot and message.type != disnake.MessageType.application_command:
@@ -387,20 +436,23 @@ class WordgameCog(commands.Cog):
                                         await draw(channel)
                                 else:
                                     logger.debug("The word is used. Eliminate player.")
-                                    games[channel]["players"].remove(message.author)
-                                    current_player = games.get(channel).get("current_player")
-                                    players = games.get(channel).get("players")
-                                    await message.channel.send(embed=disnake.Embed(
-                                        color=config.error_color,
-                                        title=util.i18n("wordgame.wordgame"),
-                                        description=util.i18n("wordgame.eliminated") % message.author.id
-                                    ))
-                                    if len(players) > 1:
-                                        if current_player >= len(players):
-                                            games[channel]["current_player"] = 0
-                                            current_player = 0
+                                    is_win = await remove_player(message.channel, message.author)
+                                    if len(games.get(channel).get("players")) > 1:
+                                        player = games.get(channel).get("players")[games.get(channel).get("current_player")]
+                                        await message.channel.send(embed=disnake.Embed(
+                                            color=config.error_color,
+                                            title=util.i18n("wordgame.wordgame"),
+                                            description=util.i18n("wordgame.eliminated") % message.author.id +
+                                            "\n\n" + util.i18n("wordgame.turn") % player.id
+                                        ))
                                     else:
-                                        await win(game.get("players")[0], channel)
+                                        await message.channel.send(embed=disnake.Embed(
+                                            color=config.error_color,
+                                            title=util.i18n("wordgame.wordgame"),
+                                            description=util.i18n("wordgame.eliminated") % message.author.id
+                                        ))
+                                    if is_win:
+                                        await win(games.get(channel).get("players")[0], channel)
                         else:
                             logger.debug("The word does not end with the correct sound")
                             await channel.send(embed=util.errorEmbed(util.i18n("wordgame.word_incorrect")))
