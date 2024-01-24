@@ -10,7 +10,7 @@ with open('test_guilds.txt', 'r') as f:
 # System Basics
 token = token.strip()
 description = "I think I'm a useful bot."
-version = "1.0.2"
+version = "1.0.3"
 repository = "https://github.com/HappyHippo77/paytsyip"
 discord_library = "Disnake"
 

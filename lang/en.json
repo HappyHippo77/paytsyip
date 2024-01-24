@@ -30,5 +30,6 @@
   "wordgame.game_over": "Game Over!",
   "wordgame.winner": "<@%s> wins!",
   "wordgame.draw": "Draw! No unused words can be played.",
-  "wordgame.word_incorrect": "Your word must begin with sound that the previous word ends with.\nE.g. \"lì'**u**\" > \"**u**van\"."
+  "wordgame.word_incorrect": "Your word must begin with sound that the previous word ends with.\nE.g. \"lì'**u**\" > \"**u**van\".",
+  "wordgame.left": "<@%s> has left the game!"
 }
