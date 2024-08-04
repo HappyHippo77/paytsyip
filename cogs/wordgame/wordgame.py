@@ -64,13 +64,15 @@ def disable_channel(channel_id: int, guild_id: int) -> disnake.Embed:
 dictionary = reykunyu.dictionary
 
 
+nuclei = ['a', 'ä', 'e', 'i', 'ì', 'o', 'u', 'á', 'é', 'à', 'è', 'ʟ', 'ʀ']
+
+
 # Returns None if the input is not a Na'vi word.
 def to_monographic(navi: str) -> str:
     pre_monographic = (navi.replace('ng', 'ŋ').replace('ay', 'à').replace('ey', 'è')
                        .replace('aw', 'á').replace('ew', 'é').replace('ll', 'ʟ')
                        .replace('rr', 'ʀ').replace('ts', 'c').replace('px', 'b')
                        .replace('tx', 'd').replace('kx', 'g'))
-    nuclei = ['a', 'ä', 'e', 'i', 'ì', 'o', 'u', 'á', 'é', 'à', 'è', 'ʟ', 'ʀ']
     monographic = ""
     for num, letter in enumerate(pre_monographic):
         if letter == 'à':
@@ -133,12 +135,12 @@ for entry in dictionary:
         valid_word_list.append(entry)
 
 # Write word lists to files to be examined. Run every time changes are made.
-with open("cogs/wordgame/word_list_outputs/dictionary.txt", "w", encoding="utf-8") as f:
-    f.write("\n".join(dictionary.keys()))
-with open("cogs/wordgame/word_list_outputs/valid_words.txt", "w", encoding="utf-8") as f:
-    f.write("\n".join(valid_word_list))
-with open("cogs/wordgame/word_list_outputs/invalid_words.txt", "w", encoding="utf-8") as f:
-    f.write("\n".join(invalid_words.keys()))
+# with open("cogs/wordgame/word_list_outputs/dictionary.txt", "w", encoding="utf-8") as f:
+#     f.write("\n".join(dictionary.keys()))
+# with open("cogs/wordgame/word_list_outputs/valid_words.txt", "w", encoding="utf-8") as f:
+#     f.write("\n".join(valid_word_list))
+# with open("cogs/wordgame/word_list_outputs/invalid_words.txt", "w", encoding="utf-8") as f:
+#     f.write("\n".join(invalid_words.keys()))
 
 
 class GameMode(Enum):
