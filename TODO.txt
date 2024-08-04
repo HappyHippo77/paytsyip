@@ -1,2 +1,7 @@
 Add time limit to word game responses
+Add win/loss ratio leaderboard.
 Na'vi vocabulary quiz
+
+The apple apostrophe is not recognized
+The word “eltu” has the definitions for “eltu si”, probably replicable on other words
+Remove the limits in ì and ä
