@@ -29,7 +29,8 @@
   "wordgame.eliminated": "<@%s> reused a word and has been eliminated!",
   "wordgame.game_over": "Game Over!",
   "wordgame.winner": "<@%s> wins!",
-  "wordgame.draw": "Draw! No unused words can be played.",
+  "wordgame.draw": "Draw! No words can be played.",
   "wordgame.word_incorrect": "Your word must begin with sound that the previous word ends with.\nE.g. \"lì'**u**\" > \"**u**van\".",
-  "wordgame.left": "<@%s> has left the game!"
+  "wordgame.left": "<@%s> has left the game!",
+  "admin.purge": "Purged %s messages from %s in %s."
 }
