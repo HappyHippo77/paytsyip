@@ -1,7 +1,9 @@
-Add time limit to word game responses
-Add win/loss ratio leaderboard.
-Na'vi vocabulary quiz
+- The word “eltu” has the definitions for “eltu si”, probably replicable on other words.
+    This is because reykunyu stores si verbs in its dictionary with the same "na'vi" entry as the original word,
+    causing the original word to be overwritten immediately with the value of the si verb in reykunyu_py. The
+    only way that I can think of to fix this would be to completely reformat the dictionary in reykunyu_py and
+    change Paytsyìp to match.
 
-The apple apostrophe is not recognized
-The word “eltu” has the definitions for “eltu si”, probably replicable on other words
-Remove the limits in ì and ä
+- Add time limit to word game responses
+- Add win/loss ratio leaderboard.
+- Na'vi vocabulary quiz

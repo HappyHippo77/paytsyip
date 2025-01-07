@@ -72,7 +72,7 @@ def to_monographic(navi: str) -> str:
     pre_monographic = (navi.replace('ng', 'ŋ').replace('ay', 'à').replace('ey', 'è')
                        .replace('aw', 'á').replace('ew', 'é').replace('ll', 'ʟ')
                        .replace('rr', 'ʀ').replace('ts', 'c').replace('px', 'b')
-                       .replace('tx', 'd').replace('kx', 'g'))
+                       .replace('tx', 'd').replace('kx', 'g').replace('‘','\''))
     monographic = ""
     for num, letter in enumerate(pre_monographic):
         if letter == 'à':
@@ -126,15 +126,15 @@ for entry in dictionary:
         invalid_words[entry] = InvalidReason.pseudovowel
     elif entry[-1] in ['à', 'è', 'á', 'é']:
         invalid_words[entry] = InvalidReason.diphthong
-    elif entry[-1] in ['ì', 'ä']:
-        invalid_words[entry] = InvalidReason.diacritic
+    #elif entry[-1] in ['ì', 'ä']:
+        #invalid_words[entry] = InvalidReason.diacritic
     else:
         if not isinstance(full_unused_words.get(entry[0]), list):
             full_unused_words[entry[0]] = []
         full_unused_words[entry[0]].append(entry)
         valid_word_list.append(entry)
 
-# Write word lists to files to be examined. Run every time changes are made.
+#Write word lists to files to be examined. Run every time changes are made.
 # with open("cogs/wordgame/word_list_outputs/dictionary.txt", "w", encoding="utf-8") as f:
 #     f.write("\n".join(dictionary.keys()))
 # with open("cogs/wordgame/word_list_outputs/valid_words.txt", "w", encoding="utf-8") as f:

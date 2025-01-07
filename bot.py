@@ -2,6 +2,7 @@ import logging
 import os
 import config
 import cogs.wordgame.wordgame
+import cogs.admin.admin
 import disnake
 from disnake.ext import commands
 
@@ -36,6 +37,7 @@ async def on_ready():
 
 # Add cogs
 bot.add_cog(cogs.wordgame.wordgame.WordgameCog(bot))
+bot.add_cog(cogs.admin.admin.AdminCog(bot))
 
 # Run bot
 bot.run(config.token)
